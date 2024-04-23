@@ -1,0 +1,5 @@
+1. should respond to slack events with a HTTP 200 OK as soon as you can.
+
+https://stackoverflow.com/questions/50715387/slack-events-api-triggers-multiple-times-by-one-message
+
+modify the app script response order

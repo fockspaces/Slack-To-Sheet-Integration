@@ -3,21 +3,34 @@ function doPost(e) {
         e = getFakeEvent()
     }
     const params = JSON.parse(e.postData.contents);
-
     if (params.type === "url_verification") {
         return handleUrlVerification(params);
     }
 
-    if (isMessageEvent(params)) {
-        return handleMessageEvent(params);
-    }
-
-    return ContentService.createTextOutput('ok');
+    PropertiesService.getScriptProperties().setProperty('eventData', JSON.stringify(params));
+    ScriptApp.newTrigger('processEventData')
+             .timeBased()
+             .after(10)  // Trigger after 10 milliseconds
+             .create();
+    return ContentService.createTextOutput('Event received, processing will be handled asynchronously.');
 }
 
 function handleUrlVerification(params) {
     console.log('URL verification requested.');
     return ContentService.createTextOutput(params.challenge);
+}
+
+function processEventData() {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const eventDataJson = scriptProperties.getProperty('eventData');
+    if (eventDataJson) {
+        const params = JSON.parse(eventDataJson);
+        if (isMessageEvent(params)) {
+            handleMessageEvent(params);
+        }
+
+        scriptProperties.deleteProperty('eventData');
+    }
 }
 
 function isMessageEvent(params) {
