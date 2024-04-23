@@ -37,7 +37,8 @@ function isRelevantMessage(event) {
     const isFromBot = event.subtype !== 'bot_message';
     const isFromChannels = CHANNELS.includes(event.channel);
     const isUserMentioned = getFirstMentionedUser(event.text);
-    return isFromBot && isFromChannels && isUserMentioned;
+    const isNotThreaded = !event.thread_ts || event.thread_ts === event.ts;
+    return isFromBot && isFromChannels && isUserMentioned && isNotThreaded;
 }
 
 function getFirstMentionedUser(text) {
