@@ -44,8 +44,11 @@ function handleUrlVerification(params) {
 }
 
 function isMessageEvent(params) {
-    return params.event && params.event.type === "message" && 
-           (params.event.text || (params.event.message && params.event.message.text));
+    if (params.event && params.event.type === "message" &&
+        (params.event.text || (params.event.message && params.event.message.text))) {
+        return !params.event.thread_ts && !params.event.subtype;
+    }
+    return false;
 }
 
 function handleMessageEvent(params) {
@@ -61,8 +64,7 @@ function isRelevantMessage(event) {
     const isFromBot = event.subtype !== 'bot_message';
     const isFromChannels = CHANNELS.includes(event.channel);
     const isUserMentioned = getFirstMentionedUser(event.text);
-    const isNotThreaded = !event.thread_ts || event.thread_ts === event.ts;
-    return isFromBot && isFromChannels && isUserMentioned && isNotThreaded;
+    return isFromBot && isFromChannels && isUserMentioned;
 }
 
 function getFirstMentionedUser(text) {
