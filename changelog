@@ -10,3 +10,6 @@ modify the app script response order
 原先有 too many triggers 的問題，目前解法是定期清 triggers
 
 每次 delete trigger 前都等一分鐘，避免還沒執行完
+
+---
+現在 doPost 只負責塞 message, 另外設 trigger condition 來每分鐘處理 queue

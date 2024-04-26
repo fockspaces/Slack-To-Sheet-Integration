@@ -8,13 +8,8 @@ function doPost(e) {
     }
 
     if (isMessageEvent(params)) {
-        const delayMinutes = queueEvent(params);
-        // Adjust the delay of the trigger based on the current queue length
-        ScriptApp.newTrigger('processEventData')
-                 .timeBased()
-                 .after(delayMinutes * 60000) // Convert minutes to milliseconds
-                 .create();
-        return ContentService.createTextOutput('Event received, processing will be handled asynchronously in about ' + delayMinutes + ' minute(s).');
+        queueEvent(params);
+        return ContentService.createTextOutput('Event received, processing will be handled asynchronously.');
     }
     return ContentService.createTextOutput('Received non-message event, no action taken.');
 }
@@ -25,8 +20,6 @@ function queueEvent(eventData) {
     const eventsQueue = eventsQueueJson ? JSON.parse(eventsQueueJson) : [];
     eventsQueue.push(eventData);
     scriptProperties.setProperty('eventsQueue', JSON.stringify(eventsQueue));
-
-    return eventsQueue.length;
 }
 
 function processEventData() {
@@ -51,11 +44,12 @@ function handleUrlVerification(params) {
 }
 
 function isMessageEvent(params) {
-    return params.event && params.event.type === "message";
+    return params.event && params.event.type === "message" && 
+           (params.event.text || (params.event.message && params.event.message.text));
 }
 
 function handleMessageEvent(params) {
-    console.log('Received a message event.');
+    console.log('Received a message event.', params);
     if (isRelevantMessage(params.event)) {
         logToSheet(params.event);
         return ContentService.createTextOutput('Message logged.');
