@@ -1,36 +1,53 @@
 function doPost(e) {
     if (!e) {
-        e = getFakeEvent()
+        e = getFakeEvent(); // For testing purposes
     }
     const params = JSON.parse(e.postData.contents);
     if (params.type === "url_verification") {
         return handleUrlVerification(params);
     }
 
-    PropertiesService.getScriptProperties().setProperty('eventData', JSON.stringify(params));
-    ScriptApp.newTrigger('processEventData')
-             .timeBased()
-             .after(10)  // Trigger after 10 milliseconds
-             .create();
-    return ContentService.createTextOutput('Event received, processing will be handled asynchronously.');
+    if (isMessageEvent(params)) {
+        const delayMinutes = queueEvent(params);
+        // Adjust the delay of the trigger based on the current queue length
+        ScriptApp.newTrigger('processEventData')
+                 .timeBased()
+                 .after(delayMinutes * 60000) // Convert minutes to milliseconds
+                 .create();
+        return ContentService.createTextOutput('Event received, processing will be handled asynchronously in about ' + delayMinutes + ' minute(s).');
+    }
+    return ContentService.createTextOutput('Received non-message event, no action taken.');
+}
+
+function queueEvent(eventData) {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const eventsQueueJson = scriptProperties.getProperty('eventsQueue');
+    const eventsQueue = eventsQueueJson ? JSON.parse(eventsQueueJson) : [];
+    eventsQueue.push(eventData);
+    scriptProperties.setProperty('eventsQueue', JSON.stringify(eventsQueue));
+
+    return eventsQueue.length;
+}
+
+function processEventData() {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const eventsQueueJson = scriptProperties.getProperty('eventsQueue');
+    if (eventsQueueJson) {
+        const eventsQueue = JSON.parse(eventsQueueJson);
+
+        eventsQueue.forEach(event => {
+            if (isMessageEvent(event)) {
+                handleMessageEvent(event);
+            }
+        });
+
+        scriptProperties.deleteProperty('eventsQueue');
+    }
 }
 
 function handleUrlVerification(params) {
     console.log('URL verification requested.');
     return ContentService.createTextOutput(params.challenge);
-}
-
-function processEventData() {
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const eventDataJson = scriptProperties.getProperty('eventData');
-    if (eventDataJson) {
-        const params = JSON.parse(eventDataJson);
-        if (isMessageEvent(params)) {
-            handleMessageEvent(params);
-        }
-
-        scriptProperties.deleteProperty('eventData');
-    }
 }
 
 function isMessageEvent(params) {

@@ -1,5 +1,12 @@
-1. should respond to slack events with a HTTP 200 OK as soon as you can.
+4/24 should respond to slack events with a HTTP 200 OK as soon as you can.
 
 https://stackoverflow.com/questions/50715387/slack-events-api-triggers-multiple-times-by-one-message
 
 modify the app script response order
+
+4/26 現在寫法 多次插入只會有一次能成功
+要確認一下寫法
+
+原先有 too many triggers 的問題，目前解法是定期清 triggers
+
+每次 delete trigger 前都等一分鐘，避免還沒執行完
