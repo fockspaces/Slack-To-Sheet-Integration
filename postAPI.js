@@ -1,16 +1,22 @@
 function doPost(e) {
     if (!e) {
-        e = getFakeEvent(); // For testing purposes
+        e = getFakeEvent();
     }
     const params = JSON.parse(e.postData.contents);
+
+    console.log('Received event params:', params);
+
     if (params.type === "url_verification") {
+        console.log('Handling URL verification...');
         return handleUrlVerification(params);
     }
 
     if (isMessageEvent(params)) {
+        console.log('Event is a message event, queuing...');
         queueEvent(params);
         return ContentService.createTextOutput('Event received, processing will be handled asynchronously.');
     }
+    console.log('Received non-message event, taking no action.');
     return ContentService.createTextOutput('Received non-message event, no action taken.');
 }
 
@@ -26,15 +32,23 @@ function processEventData() {
     const scriptProperties = PropertiesService.getScriptProperties();
     const eventsQueueJson = scriptProperties.getProperty('eventsQueue');
     if (eventsQueueJson) {
+        console.log('Processing the event queue...');
         const eventsQueue = JSON.parse(eventsQueueJson);
+        console.log(`Total events to process: ${eventsQueue.length}`);
 
-        eventsQueue.forEach(event => {
+        eventsQueue.forEach((event, index) => {
+            console.log(`Processing event ${index + 1}:`, event);
             if (isMessageEvent(event)) {
+                console.log('Event is a message event, handling...');
                 handleMessageEvent(event);
+            } else {
+                console.log('Event skipped, not a message event.');
             }
         });
-
         scriptProperties.deleteProperty('eventsQueue');
+        console.log('Event queue cleared.');
+    } else {
+        console.log('No events to process.');
     }
 }
 
@@ -44,11 +58,13 @@ function handleUrlVerification(params) {
 }
 
 function isMessageEvent(params) {
-    if (params.event && params.event.type === "message" &&
-        (params.event.text || (params.event.message && params.event.message.text))) {
-        return !params.event.thread_ts && !params.event.subtype;
+    if (!params.event || params.event.type !== "message") {
+          return false;
     }
-    return false;
+    if (params.event.thread_ts) {
+        return false;
+    }
+    return true;
 }
 
 function handleMessageEvent(params) {

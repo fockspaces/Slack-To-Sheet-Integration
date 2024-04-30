@@ -15,3 +15,5 @@ modify the app script response order
 現在 doPost 只負責塞 message, 另外設 trigger condition 來每分鐘處理 queue
 
 The isRelaventMessage and isMessageEvent need to be refined.
+
+5/1 message with attachment cannot be recognized as message, solve this issue
