@@ -64,7 +64,10 @@ function isMessageEvent(params) {
     if (params.event.thread_ts) {
         return false;
     }
-    return true;
+
+    const hasText = params.event.text || (params.event.message && params.event.message.text);
+    const hasAttachments = params.event.files || (params.event.message && params.event.message.files);
+    return (hasText || hasAttachments) && !params.event.subtype;
 }
 
 function handleMessageEvent(params) {
